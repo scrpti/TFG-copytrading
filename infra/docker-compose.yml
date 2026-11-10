@@ -1,0 +1,21 @@
+services: 
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: tfg-db
+    env_file: ../.env
+    ports: 
+     - "127.0.0.1:5432:5432"
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    - ./init-db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+  
+  redis:
+    image: redis:7
+    container_name: tfg-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+
+volumes: 
+  db_data:
