@@ -1,0 +1,8 @@
+[Unit]
+Description=Ingesta diaria de eToro
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/scrpt/Escritorio/universidad/cuarto/TFG-copytrading
+ExecStart=/home/scrpt/.local/bin/uv run python ingesta/conectores/etoro.py
+Environment=PYTHONUNBUFFERED=1
