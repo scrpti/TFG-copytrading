@@ -109,18 +109,27 @@ def descargar_serie_diaria(username):
 #         REINTENTAR EN CASO DE 429
 #---------------------------------------------
 
+INTENTOS = 5
+
 def get_con_intentos(url, params):
-    for intentos in range(3):
-        respuesta = httpx.get(url, params=params, headers=cabeceras(), timeout=30)
+    for intento in range(INTENTOS):
+        try:
+            respuesta = httpx.get(url, params=params, headers=cabeceras(), timeout=30)
+        except httpx.TransportError as e:
+            espera = 5 * 2 ** intento
+            print(f"Error de conexion ({e}), reintento en {espera} s")
+            time.sleep(espera)
+            continue
+
         if respuesta.status_code != 429 and respuesta.status_code < 500:
             return respuesta
         if respuesta.status_code == 429:
             espera = int(respuesta.headers.get("Retry-After", "60"))
         else: 
-            espera = 5 * 2 ** intentos
+            espera = 5 * 2 ** intento
         print(f"Error {respuesta.status_code}, esperando {espera} s")
         time.sleep(espera)
-    respuesta.raise_for_status()
+    raise RuntimeError(f"No se pudo completar la petición a {url} tras {INTENTOS} intentos")
 
 #---------------------------------------------
 #  DESCARGAR TODAS LAS SERIES DE LOS TRADERS
