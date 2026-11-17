@@ -3,6 +3,8 @@ import json
 import psycopg
 from dotenv import load_dotenv
 from psycopg.types.json import Jsonb
+from pathlib import Path
+
 
 load_dotenv()
 
@@ -20,7 +22,8 @@ SQL_TRADERS = """
     VALUES (%s, %s, %s, %s)
     ON CONFLICT (cid) DO UPDATE SET
         username = EXCLUDED.username,
-        ultima_vez_visto = EXCLUDED.ultima_vez_visto
+        primera_vez_visto = LEAST(traders.primera_vez_visto, EXCLUDED.primera_vez_visto),
+        ultima_vez_visto = GREATEST(traders.ultima_vez_visto, EXCLUDED.ultima_vez_visto)
 """
 
 SQL_SNAPSHOTS = """
@@ -75,16 +78,23 @@ def cargar_series(conexion, series, traders):
     with conexion.cursor() as cursor:
         cursor.executemany(SQL_SERIES, filas)
 
-if __name__ == "__main__":
-    fecha = "2026-11-11"
-    with open(f"datos/crudo/{fecha}/ranking.json", encoding="utf-8") as f:
-        traders = json.load(f)
-    with open(f"datos/crudo/{fecha}/series.json", encoding="utf-8") as f:
+def cargar_dia(conexion, carpeta):
+    fecha = carpeta.name
+    with open(carpeta / "ranking.json", encoding="utf-8") as f:
+        ranking = json.load(f)
+    with open(carpeta / "series.json", encoding="utf-8") as f:
         series = json.load(f)
 
+
+    cargar_traders(conexion, ranking, fecha)
+    cargar_snapshots(conexion, ranking, fecha)
+    cargar_series(conexion, series, ranking)
+
+if __name__ == "__main__":
+    carpetas = sorted(Path("datos/crudo").iterdir())
     with conectar() as conexion:
-        cargar_traders(conexion, traders, fecha)
-        cargar_snapshots(conexion, traders, fecha)
-        cargar_series(conexion, series, traders)
-        fila = conexion.execute("SELECT count(*) FROM rendimientos_diarios").fetchone()
-        print("Días de rentabilidad:", fila[0])
+        for carpeta in carpetas:
+            print(f"Cargando {carpeta.name}...")
+            cargar_dia(conexion, carpeta)
+        fila = conexion.execute("SELECT count(*) FROM snapshots_ranking").fetchone()
+        print("Snapshots en la base de datos:", fila[0])
