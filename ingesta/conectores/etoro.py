@@ -173,7 +173,7 @@ def guardar_json(datos, ruta):
 def main():
     inicio = time.time()
     hoy = date.today().isoformat()
-    carpeta = Path("datos") / "crudo" / hoy
+    carpeta = Path("datos") / "crudo" / "etoro" / hoy
 
     print("Descargando ranking...")
     traders = descargar_ranking_completo()

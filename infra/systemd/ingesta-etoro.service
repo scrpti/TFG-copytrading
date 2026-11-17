@@ -1,8 +1,13 @@
 [Unit]
 Description=Ingesta diaria de eToro
+StartLimitIntervalSec=1h
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
 WorkingDirectory=/home/scrpt/Escritorio/universidad/cuarto/TFG-copytrading
 ExecStart=/home/scrpt/.local/bin/uv run python ingesta/conectores/etoro.py
+ExecStart=/home/scrpt/.local/bin/uv run python ingesta/cargar.py 
 Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=5min

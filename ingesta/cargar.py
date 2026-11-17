@@ -4,6 +4,7 @@ import psycopg
 from dotenv import load_dotenv
 from psycopg.types.json import Jsonb
 from pathlib import Path
+import sys
 
 
 load_dotenv()
@@ -91,9 +92,14 @@ def cargar_dia(conexion, carpeta):
     cargar_series(conexion, series, ranking)
 
 if __name__ == "__main__":
-    carpetas = sorted(Path("datos/crudo").iterdir())
+    carpetas = sorted(Path("datos/crudo/etoro").iterdir())
+    if "--todo" in sys.argv:
+        a_cargar = carpetas
+    else:
+        a_cargar = [carpetas[-1]]
+
     with conectar() as conexion:
-        for carpeta in carpetas:
+        for carpeta in a_cargar:
             print(f"Cargando {carpeta.name}...")
             cargar_dia(conexion, carpeta)
         fila = conexion.execute("SELECT count(*) FROM snapshots_ranking").fetchone()
